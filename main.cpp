@@ -56,7 +56,7 @@ std::default_random_engine engine(seed());
     ✓) one used std::generate
         ✓) note::you have to create a vector with the right number of elements.
         ✓) std::vector<int> v(4); would create a vector with 4 elements.
-    2) one used std::remove_if
+    ✓) one used std::remove_if
     3) three used std::for_each NOTE::this is for practice. Most of these would be just fine as a ranged based for loop
 
     NOTE:: for the lambda parameter for player.inventory, you will want to use: std::pair<Item::Type, Item>
@@ -121,24 +121,58 @@ void displayBattle(const Object& player, const std::vector<Object>& monsters)
 {
     printName(player);
     std::cout  << " h:" << player.health  << std::endl;
-    for (const auto & item : player.inventory)
+
+    // Capture Clause: There is nothing to reference other than the inventory item pair  being passed in. Therefore,
+    //                  the capture clause will remain empty.
+    // Parameters: As we iterate over the map of inventory items, we pass in each "item" as a reference with the
+    //              variable name of "item". It is also marked as const as the pair is passed into displayBattle as a
+    //              const. This ensures that the item pair never gets modified within the scope of this function. For
+    //              each "item", we print the inventory item as was set up before.
+    // Return-Type: With the for_each, void is the return type we use. Since, all changes are captured within the lambda
+    auto inventorySweepLambda = []( const std::pair<Item::Type, Item>& item )->void
     {
         std::cout  << "  ";
         printItem(item.second);
-        std::cout  << std::endl;
-    }
+        std::cout << std::endl;
+    };
+    std::for_each( player.inventory.begin(), player.inventory.end(), inventorySweepLambda );
     std::cout  << std::endl  << "  Monsters: " << std::endl;
-    for (int i{ 0 }; i  < monsters.size(); i++)
+
+    //// OLD WAY:
+    //    for (const auto & item : player.inventory)
+    //    {
+    //        std::cout  << "  ";
+    //        printItem(item.second);
+    //        std::cout  << std::endl;
+    //    }
+    //    std::cout  << std::endl  << "  Monsters: " << std::endl;
+
+    int i{ 0 };
+    // Capture Clause: There is one outside reference and that is "i". Which, is the index value of the current monster.
+    // Parameters: As we iterate over the vector of monster Objects, we pass in each Object as a reference with the
+    //              variable name of "monster". It is also marked as const as the monsters vector is passed into
+    //              monsterAttack as a const. This ensures that the object never gets modified within the scope of this
+    //              function. For each "monster", we apply the existing code as setup before.
+    // Return-Type: With the for_each, void is the return type we use. Since, all changes are captured within the lambda
+    auto monsterNamePrinterLambda = [&i]( const Object& monster )->void
     {
         std::cout  << "   " << i  + 1 << ". ";
-        printName(monsters[i]);
-        std::cout  << " h:" << monsters[i].health  << std::endl;
-    }
+        printName(monster);
+        std::cout  << " h:" << monster.health  << std::endl;
+    };
+    std::for_each( monsters.begin(), monsters.end(), monsterNamePrinterLambda );
+
+    //// OLD WAY:
+    //    for (int i{ 0 }; i  < monsters.size(); i++)
+    //    {
+    //        std::cout  << "   " << i  + 1 << ". ";
+    //        printName(monsters[i]);
+    //        std::cout  << " h:" << monsters[i].health  << std::endl;
+    //    }
 }
 
 std::vector<Object> createMonsters(const Object& player)
 {
-
     std::normal_distribution<double> randomNumMonsters((double)player.level, player.level  / 2.0);
     int numMonsters{ std::max(1, (int)randomNumMonsters(engine)) };
     std::vector<Object> monsters( numMonsters );
@@ -199,7 +233,16 @@ void monsterAttack(Object& player, const std::vector<Object>& monsters)
 {
     std::bernoulli_distribution willAttack(.75);
     std::cout  << std::endl;
-    for (const auto & monster : monsters)
+
+    // Capture Clause: There are two variables that will need to be captured in this case; willAttack and player. Both
+    //                  will be passed as reference since they are user-defined types. We could also use a "&" to catch
+    //                  all references within, but the specificity narrows the potential for errors to occur.
+    // Parameters: As we iterate over the vector of monster Objects, we pass in each Object as a reference with the
+    //              variable name of "monster". It is also marked as const as the monsters vector is passed into
+    //              monsterAttack as a const. This ensures that the object never gets modified within the scope of this
+    //              function. For each "monster", we apply the existing code as setup before.
+    // Return-Type: With the for_each, void is the return type we use. Since, all changes are captured within the lambda
+    auto monsterAttackLambda = [&willAttack, &player]( const Object& monster )->void
     {
         if (willAttack(engine))
         {
@@ -212,7 +255,24 @@ void monsterAttack(Object& player, const std::vector<Object>& monsters)
             printName(monster);
             std::cout  << " twiddles its thumbs" << std::endl;
         }
-    }
+    };
+    std::for_each( monsters.begin(), monsters.end(), monsterAttackLambda );
+
+    //// OLD WAY:
+    //    for (const auto & monster : monsters)
+    //    {
+    //        if (willAttack(engine))
+    //        {
+    //            printName(monster);
+    //            std::cout  << " attacks!" << std::endl;
+    //            defend(player, attack(monster));
+    //        }
+    //        else
+    //        {
+    //            printName(monster);
+    //            std::cout  << " twiddles its thumbs" << std::endl;
+    //        }
+    //    }
 }
 
 void playerAttack(const Object& player, std::vector<Object>& monsters)
@@ -363,5 +423,20 @@ void bringOutYourDead(std::vector<Object>& monsters)
         }
         return false;
     };
-    std::remove_if( monsters.begin(), monsters.end(), monsterRemoverLambda );
+    monsters.erase( std::remove_if( monsters.begin(), monsters.end(), monsterRemoverLambda ), monsters.end() );
+
+    //// OLD WAY:
+    //    for (auto monsterIter{ monsters.begin() }; monsterIter  != monsters.end(); )
+    //    {
+    //        if (monsterIter->health  <= 0)
+    //        {
+    //            printName(*monsterIter);
+    //            std::cout  << " has died!!!" << std::endl  << std::endl;
+    //            monsterIter  = monsters.erase(monsterIter);
+    //        }
+    //        else
+    //        {
+    //            monsterIter++;
+    //        }
+    //    }
 }
