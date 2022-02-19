@@ -10,11 +10,9 @@
 //  IDE: Linux via g++      - VERIFIED WORKING (g++ -Wall -std=c++17 main.cpp -o main)
 //
 #include <iostream>
-#include <string>
 #include <vector>
 #include <random>
 #include <algorithm>
-#include <fstream>
 #include <map>
 
 struct Item
@@ -159,6 +157,7 @@ void displayBattle(const Object& player, const std::vector<Object>& monsters)
         std::cout  << "   " << i  + 1 << ". ";
         printName(monster);
         std::cout  << " h:" << monster.health  << std::endl;
+        i++;
     };
     std::for_each( monsters.begin(), monsters.end(), monsterNamePrinterLambda );
 
