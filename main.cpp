@@ -53,9 +53,9 @@ std::default_random_engine engine(seed());
 /*  Instructions:
 
     There are 5 for loops in my solution, we are going to switch the ones we can to STL algorithms. For my solution:
-    1) one used std::generate
-        a) note::you have to create a vector with the right number of elements.
-        b) std::vector<int> v(4); would create a vector with 4 elements.
+    ✓) one used std::generate
+        ✓) note::you have to create a vector with the right number of elements.
+        ✓) std::vector<int> v(4); would create a vector with 4 elements.
     2) one used std::remove_if
     3) three used std::for_each NOTE::this is for practice. Most of these would be just fine as a ranged based for loop
 
@@ -346,18 +346,22 @@ void heal(Object& object)
 
 void bringOutYourDead(std::vector<Object>& monsters)
 {
-
-    for (auto monsterIter{ monsters.begin() }; monsterIter  != monsters.end(); )
+    // Capture Clause: There is nothing to reference other than the Object struct instance being passed in. Therefore,
+    //                  the capture clause will remain empty.
+    // Parameters: As we iterate over the vector of Objects, we pass in each Object as a reference with the variable
+    //              name of "object". For each "object", if it matches our conditions, then we remove it. That is,
+    //              remove it from the list of iterators.
+    // Return-Type: With the remove_if, if it matches the conditions we set, it will return true. Otherwise, it will
+    //              return false. So, we will want a bool as our return type.
+    auto monsterRemoverLambda = []( Object& object )->bool
     {
-        if (monsterIter->health  <= 0)
+        if (object.health  <= 0)
         {
-            printName(*monsterIter);
+            printName(object);
             std::cout  << " has died!!!" << std::endl  << std::endl;
-            monsterIter  = monsters.erase(monsterIter);
+            return true;
         }
-        else
-        {
-            monsterIter++;
-        }
-    }
+        return false;
+    };
+    std::remove_if( monsters.begin(), monsters.end(), monsterRemoverLambda );
 }
