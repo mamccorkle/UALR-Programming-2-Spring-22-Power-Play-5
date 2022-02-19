@@ -16,12 +16,14 @@
 #include <algorithm>
 #include <fstream>
 #include <map>
+
 struct Item
 {
-    enum class Type {sword, armor, shield, numTypes};
+    enum class Type { sword, armor, shield, numTypes };
     Type clasification;
     int bonusValue;
 };
+
 struct Object
 {
     enum class Type { player, slime, orc, sprite, dragon, numTypes };
@@ -31,6 +33,7 @@ struct Object
     int level{ 0 };
     std::map<Item::Type, Item> inventory;
 };
+
 std::vector<Object> createMonsters(const Object& player);
 void monsterAttack(Object& player, const std::vector<Object>& monsters);
 void bringOutYourDead(std::vector<Object>& monsters);
@@ -43,8 +46,22 @@ void printName(const Object& object);
 void printItem(const Item & item);
 int attack(const Object& object);
 void defend(Object& object, int damage);
+
 std::random_device seed;
 std::default_random_engine engine(seed());
+
+/*  Instructions:
+
+    There are 5 for loops in my solution, we are going to switch the ones we can to STL algorithms. For my solution:
+    1) one used std::generate
+        a) note::you have to create a vector with the right number of elements.
+        b) std::vector<int> v(4); would create a vector with 4 elements.
+    2) one used std::remove_if
+    3) three used std::for_each NOTE::this is for practice. Most of these would be just fine as a ranged based for loop
+
+    NOTE:: for the lambda parameter for player.inventory, you will want to use: std::pair<Item::Type, Item>
+ */
+
 int main()
 {
     Object player{ Object::Type::player, 0,1,0, {} };
@@ -82,6 +99,7 @@ int main()
             system("CLS");
         }
     }
+
     if (player.health  <= 0)
     {
         std::cout  << "You Have Died" << std::endl;
@@ -95,7 +113,10 @@ int main()
         std::cout  << "You have killed the monsters!!!" << std::endl;
     }
     system("PAUSE");
+
+    return 0;
 }
+
 void displayBattle(const Object& player, const std::vector<Object>& monsters)
 {
     printName(player);
@@ -114,15 +135,25 @@ void displayBattle(const Object& player, const std::vector<Object>& monsters)
         std::cout  << " h:" << monsters[i].health  << std::endl;
     }
 }
+
 std::vector<Object> createMonsters(const Object& player)
 {
 
     std::normal_distribution<double> randomNumMonsters((double)player.level, player.level  / 2.0);
     int numMonsters{ std::max(1, (int)randomNumMonsters(engine)) };
-    std::vector<Object> monsters;
-    for (int i{ 0 }; i  < numMonsters; i++)
+    std::vector<Object> monsters( numMonsters );
+
+    // Capture Clause: Kinda like global variables are to the main function. So, we want to reference them by using a
+    //                  "&" symbol. I want to limit the scope of what I reference, so I just reference the player object
+    //                  only. There's not any other variables that I will need to reference, and I don't want to
+    //                  reference EVERYTHING, so I limit it the player object.
+    // Parameters: There will be nothing to iterator over here as the Objects have not been generated yet. Normally,
+    //              they are the objects we are iterating over, in this case it is the reference to the "Objects" in the
+    //              vector.
+    // Return-Type: Since we are iterating over a vector of objects, we want to return an Object that is placed at that
+    //               vectors element/location/index
+    auto monsterGeneratorLambda = [&player](  )-> Object
     {
-        //set level based on player level
         std::normal_distribution<double> monsterLevel((float)player.level, player.level  / 4.0);
         int level{ std::max(1, (int)monsterLevel(engine)) };
         std::uniform_int_distribution<int> monsterType(1, (int)Object::Type::numTypes  - 1);
@@ -150,17 +181,20 @@ std::vector<Object> createMonsters(const Object& player)
         }
         std::normal_distribution<double> randomStrength(strengthVariance, level  / 4.0);
         std::normal_distribution<double> randomHealth(healthVariance * 5, level  / 2.0);
-        monsters.push_back(
-                {
-                        name,
-                        std::max(1, (int)randomStrength(engine)),
-                        std::max(1, (int)randomHealth(engine)),
-                        level,
-                        {}
-                });
-    }
+
+        Object brandSpankingNewMonsterFreshOffThePress = { name,
+                                                           std::max(1, (int)randomStrength(engine)),
+                                                           std::max(1, (int)randomHealth(engine)),
+                                                           level,
+                                                           {} };
+
+        return brandSpankingNewMonsterFreshOffThePress;
+    };
+    std::generate( monsters.begin(), monsters.end(), monsterGeneratorLambda );
+
     return monsters;
 }
+
 void monsterAttack(Object& player, const std::vector<Object>& monsters)
 {
     std::bernoulli_distribution willAttack(.75);
@@ -180,6 +214,7 @@ void monsterAttack(Object& player, const std::vector<Object>& monsters)
         }
     }
 }
+
 void playerAttack(const Object& player, std::vector<Object>& monsters)
 {
     std::cout  << "Which Monster: ";
@@ -190,6 +225,7 @@ void playerAttack(const Object& player, std::vector<Object>& monsters)
         defend(monsters[monsterNum  - 1], attack(player));
     }
 }
+
 void levelUp(Object& player)
 {
     player.level++;
@@ -218,6 +254,7 @@ void levelUp(Object& player)
         std::cout  << "You toss aside the ugly old thing!" << std::endl;
     }
 }
+
 int calculateAC(const Object& object)
 {
     int AC{ 0 };
@@ -233,6 +270,7 @@ int calculateAC(const Object& object)
     }
     return AC;
 }
+
 void printName(const Object& object)
 {
     std::cout  << "L:" << object.level  << " ";
@@ -255,6 +293,7 @@ void printName(const Object& object)
             break;
     }
 }
+
 void printItem(const Item& item)
 {
     switch (item.clasification)
@@ -271,6 +310,7 @@ void printItem(const Item& item)
     }
     std::cout  << "+" << item.bonusValue;
 }
+
 int attack(const Object& object)
 {
     int potentialDamage{ object.strength  };
@@ -284,6 +324,7 @@ int attack(const Object& object)
     std::cout  << " deals ";
     return std::max(1, (int)damageDealt(engine));
 }
+
 void defend(Object& object, int damage)
 {
     std::normal_distribution<double> defense(calculateAC(object), 1.0 / object.level);
@@ -293,6 +334,7 @@ void defend(Object& object, int damage)
     std::cout   << "!!!" << std::endl;
     object.health  -= damage;
 }
+
 void heal(Object& object)
 {
     std::normal_distribution<double> randomHeal(object.strength, 3.0);
@@ -301,6 +343,7 @@ void heal(Object& object)
     std::cout  << " is healed by " << amountHealed  << "hp!" << std::endl;
     object.health  += amountHealed;
 }
+
 void bringOutYourDead(std::vector<Object>& monsters)
 {
 
