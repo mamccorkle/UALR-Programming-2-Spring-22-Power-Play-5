@@ -7,7 +7,7 @@
 //  IDE: CLion 2021.2.3     - VERIFIED WORKING
 //  IDE: XCode              - VERIFIED/UNVERIFIED
 //  IDE: Visual Studio 2022 - VERIFIED/UNVERIFIED
-//  IDE: Linux via g++      - VERIFIED/UNVERIFIED
+//  IDE: Linux via g++      - VERIFIED WORKING (g++ -Wall -std=c++17 main.cpp -o main)
 //
 #include <iostream>
 #include <string>
@@ -212,6 +212,10 @@ std::vector<Object> createMonsters(const Object& player)
                 strengthVariance  = level  * 6;
                 healthVariance  = level  * level  * 3;
                 break;
+            case Object::Type::player:
+                break;
+            case Object::Type::numTypes:
+                break;
         }
         std::normal_distribution<double> randomStrength(strengthVariance, level  / 4.0);
         std::normal_distribution<double> randomHealth(healthVariance * 5, level  / 2.0);
@@ -280,7 +284,7 @@ void playerAttack(const Object& player, std::vector<Object>& monsters)
     std::cout  << "Which Monster: ";
     int monsterNum{ 0 };
     std::cin  >> monsterNum;
-    if (monsterNum  > 0 && monsterNum  <= monsters.size())
+    if (monsterNum  > 0 && monsterNum <= (int)monsters.size())
     {
         defend(monsters[monsterNum  - 1], attack(player));
     }
@@ -351,6 +355,8 @@ void printName(const Object& object)
         case Object::Type::dragon:
             std::cout  << "Dragon";
             break;
+        case Object::Type::numTypes:
+            break;
     }
 }
 
@@ -366,6 +372,8 @@ void printItem(const Item& item)
             break;
         case Item::Type::sword:
             std::cout  << "Sword";
+            break;
+        case Item::Type::numTypes:
             break;
     }
     std::cout  << "+" << item.bonusValue;
